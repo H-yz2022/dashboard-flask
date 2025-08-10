@@ -1,6 +1,10 @@
-Flask
+flask
+gunicorn
 geopandas
+pandas
 folium
 branca
-pandas
 plotly
+shapely
+fiona
+pyproj
