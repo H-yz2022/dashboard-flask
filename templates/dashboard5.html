@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>AADT Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+    <style>
+        /* Full height page with no margin */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+        }
+        /* Container for map and chart side by side */
+        #map-container {
+            width: 60%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        #chart-container {
+            width: 40%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+            border-left: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+        }
+        /* iframe fills map container */
+        #map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        /* Chart container styling */
+        #chart-title {
+            margin: 0 0 10px 0;
+            font-weight: normal;
+        }
+        #linechart {
+            flex-grow: 1;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map-container">
+        <!-- The map is loaded inside this iframe -->
+        <iframe id="map" src="{{ url_for('static', filename='map-3.html') }}"></iframe>
+    </div>
+
+    <div id="chart-container">
+        <h3 id="chart-title">AADT Time Series - Default</h3>
+        <div id="linechart"></div>
+    </div>
+
+    <script>
+        // Variables injected by Flask: markerData and defaultNode
+        const markerData = {{ marker_data | safe }};
+        const defaultNode = {{ default_node | safe }};
+
+        // Plot the default node graph on page load
+        function plotNodeGraph(node) {
+            Plotly.newPlot('linechart', [{
+                x: node.years,
+                y: node.values,
+                mode: 'lines+markers',
+                name: 'AADT',
+                line: { shape: 'spline' },
+                marker: { color: 'gray' }
+            }], {
+                title: `AADT Time Series - Node ${node.N}`,
+                xaxis: { title: 'Year' },
+                yaxis: { title: 'AADT' },
+                margin: { l: 40, r: 30, t: 40, b: 40 }
+            });
+            document.getElementById('chart-title').innerText = `AADT Time Series - Node ${node.N}`;
+        }
+
+        plotNodeGraph(defaultNode);
+
+        // Once the iframe map loads, send the marker data for Leaflet to add markers
+        document.getElementById('map').addEventListener('load', () => {
+            const iframe = document.getElementById('map').contentWindow;
+            if (!iframe) {
+                console.error("Map iframe contentWindow not accessible");
+                return;
+            }
+            console.log("Sending marker data to map iframe...");
+            iframe.postMessage({ action: 'initMarkers', data: markerData }, '*');
+        });
+
+        // Listen for messages from the iframe - triggered on marker click in map-3.html
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data || !data.N || !data.years || !data.values) {
+                // Ignore irrelevant messages
+                return;
+            }
+            console.log("Received marker click data:", data);
+            plotNodeGraph(data);
+        });
+    </script>
+</body>
+</html>
+
+
