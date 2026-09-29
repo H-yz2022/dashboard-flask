@@ -1,10 +1,3 @@
-flask
+flask>=3.0
 gunicorn
-geopandas
-pandas
-folium
-branca
-plotly
-shapely
-fiona
-pyproj
+folium>=0.15
