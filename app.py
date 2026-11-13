@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, url_for
 import folium
 import bisect
 import json
@@ -159,11 +159,17 @@ MAP_HTML = build_map(
 DEFAULT_NODE = next((n for n in MARKER_DATA if n["N"] == 3722), MARKER_DATA[0])
 
 
-@app.route('/')
-def index():
+def render_dashboard(map_src):
+    """The dashboard page; `map_src` is where its iframe loads the map from."""
     return render_template("dashboard5.html",
+                           map_src=map_src,
                            marker_data=json.dumps(MARKER_DATA),
                            default_node=json.dumps(DEFAULT_NODE))
+
+
+@app.route('/')
+def index():
+    return render_dashboard(url_for('map_page'))
 
 
 @app.route('/map')
